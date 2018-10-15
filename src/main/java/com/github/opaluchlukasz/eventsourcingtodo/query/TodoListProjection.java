@@ -1,6 +1,7 @@
 package com.github.opaluchlukasz.eventsourcingtodo.query;
 
 import com.github.opaluchlukasz.eventsourcingtodo.coreapi.TodoItemAddedEvent;
+import com.github.opaluchlukasz.eventsourcingtodo.coreapi.TodoItemDoneEvent;
 import com.github.opaluchlukasz.eventsourcingtodo.coreapi.TodoListCreatedEvent;
 import com.github.opaluchlukasz.eventsourcingtodo.query.Query.FetchListNamesQuery;
 import com.github.opaluchlukasz.eventsourcingtodo.query.Query.FetchTodoListQuery;
@@ -11,6 +12,8 @@ import org.axonframework.queryhandling.QueryHandler;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+
+import static java.util.stream.Collectors.toList;
 
 @Component
 @Slf4j
@@ -31,8 +34,18 @@ public class TodoListProjection {
     @EventHandler
     public void on(TodoItemAddedEvent event) {
         ReadTodoList readTodoList = readTodoListRepository.findTodoList(event.getListName());
-        readTodoList.getTodos().add(new ReadTodoList.Item(event.getItem()));
+        readTodoList.getTodos().add(new ReadTodoList.Item(event.getItem(), false));
         readTodoListRepository.saveTodoList(readTodoList);
+    }
+
+    @EventHandler
+    public void on(TodoItemDoneEvent event) {
+        ReadTodoList todoList = readTodoListRepository.findTodoList(event.getListName());
+        List<ReadTodoList.Item> todoListItems = todoList.getTodos().stream()
+                .map(item -> item.item.equals(event.getItem()) ? item.done() : item)
+                .collect(toList());
+
+        readTodoListRepository.saveTodoList(new ReadTodoList(todoList.getListName(), todoListItems));
     }
 
     @QueryHandler

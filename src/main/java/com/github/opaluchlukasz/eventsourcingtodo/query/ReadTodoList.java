@@ -3,6 +3,7 @@ package com.github.opaluchlukasz.eventsourcingtodo.query;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -13,6 +14,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @Getter
 @EqualsAndHashCode
+@ToString
 public class ReadTodoList implements Serializable {
     private final String listName;
     private final List<Item> todos;
@@ -25,8 +27,12 @@ public class ReadTodoList implements Serializable {
     @RequiredArgsConstructor
     @EqualsAndHashCode(exclude = "modificationDate")
     static class Item implements Serializable {
-        private final String item;
-        private final boolean done = false;
-        private final LocalDateTime modificationDate = LocalDateTime.now();
+        final String item;
+        final boolean done;
+        final LocalDateTime modificationDate = LocalDateTime.now();
+
+        Item done() {
+            return new Item(item, true);
+        }
     }
 }

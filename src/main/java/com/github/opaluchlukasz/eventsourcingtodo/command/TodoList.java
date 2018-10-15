@@ -1,9 +1,6 @@
 package com.github.opaluchlukasz.eventsourcingtodo.command;
 
-import com.github.opaluchlukasz.eventsourcingtodo.coreapi.AddTodoItemCommand;
-import com.github.opaluchlukasz.eventsourcingtodo.coreapi.CreateTodoListCommand;
-import com.github.opaluchlukasz.eventsourcingtodo.coreapi.TodoItemAddedEvent;
-import com.github.opaluchlukasz.eventsourcingtodo.coreapi.TodoListCreatedEvent;
+import com.github.opaluchlukasz.eventsourcingtodo.coreapi.*;
 import lombok.NoArgsConstructor;
 import org.axonframework.commandhandling.CommandHandler;
 import org.axonframework.commandhandling.model.AggregateIdentifier;
@@ -13,6 +10,7 @@ import org.axonframework.spring.stereotype.Aggregate;
 import java.util.LinkedList;
 import java.util.List;
 
+import static java.util.stream.Collectors.toList;
 import static org.axonframework.commandhandling.model.AggregateLifecycle.apply;
 
 @Aggregate
@@ -32,14 +30,31 @@ public class TodoList {
         apply(new TodoItemAddedEvent(command.getListName(), command.getItem()));
     }
 
+    @CommandHandler
+    public void handle(MarkItemAsDoneCommand command) {
+        apply(new TodoItemDoneEvent(command.getListName(), command.getItem()));
+    }
+
     @EventSourcingHandler
     public void on(TodoListCreatedEvent todoListCreatedEvent) {
-        this.listName = todoListCreatedEvent.getListName();
-        this.todos = new LinkedList<>();
+        listName = todoListCreatedEvent.getListName();
+        todos = new LinkedList<>();
     }
 
     @EventSourcingHandler
     public void on(TodoItemAddedEvent event) {
-        this.todos.add(new TodoItem(event.getItem(), false));
+        todos.stream()
+                .filter(item -> item.getItem().equals(event.getItem())).findFirst()
+                .ifPresent(item -> {
+                    throw new IllegalArgumentException("Item already exists");
+                });
+        todos.add(new TodoItem(event.getItem(), false));
+    }
+
+    @EventSourcingHandler
+    public void on(TodoItemDoneEvent event) {
+        todos = todos.stream()
+                .map(item -> item.getItem().equals(event.getItem()) ? item.done() : item)
+                .collect(toList());
     }
 }
