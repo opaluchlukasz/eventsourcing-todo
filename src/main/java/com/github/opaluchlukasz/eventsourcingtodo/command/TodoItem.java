@@ -1,17 +1,21 @@
 package com.github.opaluchlukasz.eventsourcingtodo.command;
 
+import com.github.opaluchlukasz.eventsourcingtodo.coreapi.TodoItemDoneEvent;
+import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import org.axonframework.commandhandling.model.EntityId;
+import org.axonframework.eventsourcing.EventSourcingHandler;
 
-@RequiredArgsConstructor
+@AllArgsConstructor
 @EqualsAndHashCode
 @Getter
 public class TodoItem {
-    public final String item;
-    public final boolean done;
+    @EntityId(routingKey = "item") public final String item;
+    public boolean done;
 
-    public TodoItem done() {
-        return new TodoItem(item, true);
+    @EventSourcingHandler
+    public void on(TodoItemDoneEvent event) {
+        done = true;
     }
 }

@@ -4,20 +4,21 @@ import com.github.opaluchlukasz.eventsourcingtodo.coreapi.*;
 import lombok.NoArgsConstructor;
 import org.axonframework.commandhandling.CommandHandler;
 import org.axonframework.commandhandling.model.AggregateIdentifier;
+import org.axonframework.commandhandling.model.AggregateMember;
+import org.axonframework.commandhandling.model.ForwardMatchingInstances;
 import org.axonframework.eventsourcing.EventSourcingHandler;
 import org.axonframework.spring.stereotype.Aggregate;
 
 import java.util.LinkedList;
 import java.util.List;
 
-import static java.util.stream.Collectors.toList;
 import static org.axonframework.commandhandling.model.AggregateLifecycle.apply;
 
 @Aggregate
 @NoArgsConstructor
 public class TodoList {
-    @AggregateIdentifier
-    private String listName;
+    @AggregateIdentifier private String listName;
+    @AggregateMember(eventForwardingMode = ForwardMatchingInstances.class)
     private List<TodoItem> todos;
 
     @CommandHandler
@@ -49,12 +50,5 @@ public class TodoList {
                     throw new IllegalArgumentException("Item already exists");
                 });
         todos.add(new TodoItem(event.getItem(), false));
-    }
-
-    @EventSourcingHandler
-    public void on(TodoItemDoneEvent event) {
-        todos = todos.stream()
-                .map(item -> item.getItem().equals(event.getItem()) ? item.done() : item)
-                .collect(toList());
     }
 }
