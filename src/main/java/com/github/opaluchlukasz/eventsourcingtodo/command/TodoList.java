@@ -1,6 +1,9 @@
 package com.github.opaluchlukasz.eventsourcingtodo.command;
 
-import com.github.opaluchlukasz.eventsourcingtodo.coreapi.*;
+import com.github.opaluchlukasz.eventsourcingtodo.coreapi.AddTodoItemCommand;
+import com.github.opaluchlukasz.eventsourcingtodo.coreapi.CreateTodoListCommand;
+import com.github.opaluchlukasz.eventsourcingtodo.coreapi.TodoItemAddedEvent;
+import com.github.opaluchlukasz.eventsourcingtodo.coreapi.TodoListCreatedEvent;
 import lombok.NoArgsConstructor;
 import org.axonframework.commandhandling.CommandHandler;
 import org.axonframework.commandhandling.model.AggregateIdentifier;
@@ -28,12 +31,12 @@ public class TodoList {
 
     @CommandHandler
     public void handle(AddTodoItemCommand command) {
+        todos.stream()
+                .filter(item -> item.getItem().equals(command.getItem())).findFirst()
+                .ifPresent(item -> {
+                    throw new IllegalArgumentException("Item already exists");
+                });
         apply(new TodoItemAddedEvent(command.getListName(), command.getItem()));
-    }
-
-    @CommandHandler
-    public void handle(MarkItemAsDoneCommand command) {
-        apply(new TodoItemDoneEvent(command.getListName(), command.getItem()));
     }
 
     @EventSourcingHandler
@@ -44,11 +47,6 @@ public class TodoList {
 
     @EventSourcingHandler
     public void on(TodoItemAddedEvent event) {
-        todos.stream()
-                .filter(item -> item.getItem().equals(event.getItem())).findFirst()
-                .ifPresent(item -> {
-                    throw new IllegalArgumentException("Item already exists");
-                });
         todos.add(new TodoItem(event.getItem(), false));
     }
 }

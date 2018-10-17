@@ -65,8 +65,8 @@ class TodoListTest extends Specification {
         expect:
         fixture.given(new TodoListCreatedEvent(LIST_NAME), new TodoItemAddedEvent(LIST_NAME, item))
                 .when(new AddTodoItemCommand(LIST_NAME, item))
-                .expectException(matches([ test: { it.cause.class == IllegalArgumentException &&
-                        it.cause.message == 'Item already exists' }] as Predicate))
+                .expectException(matches([ test: { it.class == IllegalArgumentException &&
+                        it.message == 'Item already exists' }] as Predicate))
     }
 
     def 'should not mark item as done when aggregate does not exist'() {
